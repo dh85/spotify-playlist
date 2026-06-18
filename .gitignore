@@ -6,7 +6,6 @@
 
 # Binary
 spotify-playlist
-spotify
 
 # GoReleaser
 dist/
