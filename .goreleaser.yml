@@ -1,3 +1,5 @@
+version: 2
+
 project_name: spotify-playlist
 
 builds:
@@ -16,11 +18,13 @@ builds:
       - arm64
 
 archives:
-  - format: tar.gz
+  - formats:
+      - tar.gz
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
-        format: zip
+        formats:
+          - zip
 
 checksum:
   name_template: "checksums.txt"
@@ -32,10 +36,11 @@ changelog:
       - "^docs:"
       - "^test:"
 
-brews:
+homebrew:
   - repository:
       owner: dh85
       name: homebrew-tap
+      token: "{{ .Env.PUBLISH_GITHUB_TOKEN }}"
     directory: Formula
     homepage: "https://github.com/dh85/spotify-playlist"
     description: "CLI tool to display formatted Spotify playlists"
@@ -47,6 +52,7 @@ scoops:
   - repository:
       owner: dh85
       name: scoop-bucket
+      token: "{{ .Env.PUBLISH_GITHUB_TOKEN }}"
     homepage: "https://github.com/dh85/spotify-playlist"
     description: "CLI tool to display formatted Spotify playlists"
     license: "MIT"
