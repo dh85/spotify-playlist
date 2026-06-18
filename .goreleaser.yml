@@ -1,0 +1,52 @@
+project_name: spotify-playlist
+
+builds:
+  - main: ./cmd/spotify
+    binary: spotify-playlist
+    ldflags:
+      - -s -w
+      - -X main.defaultClientID={{ .Env.SPOTIFY_CLIENT_ID }}
+      - -X main.version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+brews:
+  - repository:
+      owner: dh85
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/dh85/spotify-playlist"
+    description: "CLI tool to display formatted Spotify playlists"
+    license: "MIT"
+    install: |
+      bin.install "spotify-playlist"
+
+scoops:
+  - repository:
+      owner: dh85
+      name: scoop-bucket
+    homepage: "https://github.com/dh85/spotify-playlist"
+    description: "CLI tool to display formatted Spotify playlists"
+    license: "MIT"

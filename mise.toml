@@ -1,0 +1,21 @@
+[tools]
+go = "1.26"
+golangci-lint = "latest"
+
+[tasks.setup]
+run = "go mod download"
+
+[tasks.test]
+run = "go test ./..."
+
+[tasks.lint]
+run = "golangci-lint run"
+
+[tasks.run]
+run = "go run ./cmd/spotify"
+
+[tasks.tidy]
+run = "go mod tidy"
+
+[tasks.check]
+depends = ["tidy", "test", "lint"]
