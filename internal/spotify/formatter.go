@@ -46,6 +46,24 @@ func FormatPlaylist(p Playlist) string {
 	return b.String() + "\n"
 }
 
+func FormatPlaylistCustom(p Playlist, style string) string {
+	if len(p.Tracks) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	for _, t := range p.Tracks {
+		artists := strings.Join(t.Artists, ", ")
+		line := strings.NewReplacer(
+			"{artist}", artists,
+			"{title}", t.Name,
+			"{album}", t.Album,
+		).Replace(style)
+		fmt.Fprintln(&b, line)
+	}
+	return b.String()
+}
+
 func FormatPlaylistRaw(p Playlist) string {
 	if len(p.Tracks) == 0 {
 		return ""

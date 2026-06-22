@@ -8,11 +8,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/dh85/spotify-playlist/internal/auth"
+	"github.com/dh85/spotify-playlist/internal/config"
 	"github.com/dh85/spotify-playlist/internal/spotify"
 	"github.com/dh85/spotify-playlist/internal/storage"
 )
@@ -123,6 +126,23 @@ func run() error {
 
 	if raw {
 		fmt.Print(spotify.FormatPlaylistRaw(playlist))
+		return nil
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	if err := config.Init(); err != nil {
+		return err
+	}
+
+	if cfg.SaveToFile {
+		return saveAndOpen(playlist, cfg)
+	}
+
+	if cfg.FormatStyle != "" {
+		fmt.Print(spotify.FormatPlaylistCustom(playlist, cfg.FormatStyle))
 	} else {
 		fmt.Print(spotify.FormatPlaylist(playlist))
 	}
@@ -136,9 +156,12 @@ Usage:
   spotify-playlist [flags] <playlist-url>
 
 Flags:
-  -r, --raw        Plain text output (artist - track name)
+  -r, --raw        Plain text output to stdout (skips file save)
   -v, --version    Print version
   -h, --help       Print this help
+
+By default, output is saved to a .txt file and opened.
+Config: ~/.config/spotify-playlist/config
 
 Examples:
   spotify-playlist "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
@@ -159,6 +182,42 @@ func openBrowser(u string) error {
 		return exec.Command("open", u).Start()
 	case "windows":
 		return exec.Command("rundll32", "url.dll,FileProtocolHandler", u).Start()
+	default:
+		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
+	}
+}
+
+var sanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9_\-. ]+`)
+
+func saveAndOpen(p spotify.Playlist, cfg config.Config) error {
+	name := sanitizeRe.ReplaceAllString(p.Name, "")
+	filename := filepath.Join(cfg.OutputDir, name+".txt")
+
+	var content string
+	if cfg.FormatStyle != "" {
+		content = spotify.FormatPlaylistCustom(p, cfg.FormatStyle)
+	} else {
+		content = spotify.FormatPlaylistRaw(p)
+	}
+	if err := os.WriteFile(filename, []byte(content), 0o644); err != nil {
+		return err
+	}
+
+	fmt.Printf("Saved to %s\n", filename)
+	return openFile(filename)
+}
+
+func openFile(path string) error {
+	switch runtime.GOOS {
+	case "linux":
+		if _, err := exec.LookPath("wslview"); err == nil {
+			return exec.Command("wslview", path).Start()
+		}
+		return exec.Command("xdg-open", path).Start()
+	case "darwin":
+		return exec.Command("open", path).Start()
+	case "windows":
+		return exec.Command("rundll32", "url.dll,FileProtocolHandler", path).Start()
 	default:
 		return fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}
