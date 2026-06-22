@@ -8,15 +8,17 @@ import (
 
 func TestLoadFrom(t *testing.T) {
 	tests := []struct {
-		name     string
-		content  string
-		wantDir  string
-		wantSave bool
+		name       string
+		content    string
+		wantDir    string
+		wantSave   bool
+		wantFormat string
 	}{
-		{"returns defaults when file not exists", "", ".", true},
-		{"parses valid config", "output_dir=/tmp/playlists\nsave_to_file=true\n", "/tmp/playlists", true},
-		{"save_to_file false", "save_to_file=false\n", ".", false},
-		{"ignores comments and blank lines", "# comment\n  \noutput_dir=~/Music\n\n# another\ninvalid_line_without_equals\n", "~/Music", true},
+		{"returns defaults when file not exists", "", ".", true, defaultFormatStyle},
+		{"parses valid config", "output_dir=/tmp/playlists\nsave_to_file=true\n", "/tmp/playlists", true, defaultFormatStyle},
+		{"save_to_file false", "save_to_file=false\n", ".", false, defaultFormatStyle},
+		{"custom format_style", "format_style={artist} - {title} [{album}]\n", ".", true, "{artist} - {title} [{album}]"},
+		{"ignores comments and blank lines", "# comment\n  \noutput_dir=~/Music\n\n# another\ninvalid_line_without_equals\n", "~/Music", true, defaultFormatStyle},
 	}
 
 	for _, tt := range tests {
@@ -38,6 +40,9 @@ func TestLoadFrom(t *testing.T) {
 			if cfg.SaveToFile != tt.wantSave {
 				t.Errorf("got SaveToFile=%v, want %v", cfg.SaveToFile, tt.wantSave)
 			}
+			if cfg.FormatStyle != tt.wantFormat {
+				t.Errorf("got FormatStyle=%q, want %q", cfg.FormatStyle, tt.wantFormat)
+			}
 		})
 	}
 }
@@ -55,6 +60,9 @@ func TestInitAt_CreatesFileWhenNotExists(t *testing.T) {
 	}
 	if cfg.OutputDir != "." {
 		t.Errorf("got OutputDir=%q, want %q", cfg.OutputDir, ".")
+	}
+	if cfg.FormatStyle != defaultFormatStyle {
+		t.Errorf("got FormatStyle=%q, want %q", cfg.FormatStyle, defaultFormatStyle)
 	}
 }
 
