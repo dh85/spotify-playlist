@@ -21,23 +21,8 @@ func FormatPlaylist(p Playlist) string {
 	}
 
 	var b strings.Builder
-	line := strings.Repeat("─", boxWidth)
+	writeHeader(&b, p)
 
-	// Header
-	fmt.Fprintf(&b, "\n%s%s%s\n", colorCyan, line, colorReset)
-	fmt.Fprintf(&b, "%s%s %s%s%s%s\n", colorCyan, colorReset, colorBold, colorGreen, p.Name, colorReset)
-
-	totalMs := 0
-	for _, t := range p.Tracks {
-		totalMs += t.DurationMs
-	}
-	duration := formatTotalDuration(totalMs)
-	fmt.Fprintf(&b, "%s%s %s📊 %d tracks%s %s⏱️  %s%s\n",
-		colorCyan, colorReset, colorYellow, len(p.Tracks), colorReset, colorYellow, duration, colorReset)
-
-	fmt.Fprintf(&b, "%s%s%s\n\n", colorCyan, line, colorReset)
-
-	// Track list
 	for _, t := range p.Tracks {
 		artists := strings.Join(t.Artists, ", ")
 		fmt.Fprintf(&b, trackFormat, artists, t.Name)
@@ -46,12 +31,45 @@ func FormatPlaylist(p Playlist) string {
 	return b.String() + "\n"
 }
 
+func writeHeader(b *strings.Builder, p Playlist) {
+	line := strings.Repeat("─", boxWidth)
+
+	fmt.Fprintf(b, "\n%s%s%s\n", colorCyan, line, colorReset)
+	fmt.Fprintf(b, "%s%s %s%s%s%s\n", colorCyan, colorReset, colorBold, colorGreen, p.Name, colorReset)
+
+	totalMs := 0
+	for _, t := range p.Tracks {
+		totalMs += t.DurationMs
+	}
+	duration := formatTotalDuration(totalMs)
+	fmt.Fprintf(b, "%s%s %s📊 %d tracks%s %s⏱️  %s%s\n",
+		colorCyan, colorReset, colorYellow, len(p.Tracks), colorReset, colorYellow, duration, colorReset)
+
+	fmt.Fprintf(b, "%s%s%s\n\n", colorCyan, line, colorReset)
+}
+
 func FormatPlaylistCustom(p Playlist, style string) string {
 	if len(p.Tracks) == 0 {
 		return ""
 	}
 
 	var b strings.Builder
+	writeHeader(&b, p)
+	writeTracks(&b, p, style)
+	return b.String()
+}
+
+func FormatPlaylistTracksOnly(p Playlist, style string) string {
+	if len(p.Tracks) == 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	writeTracks(&b, p, style)
+	return b.String()
+}
+
+func writeTracks(b *strings.Builder, p Playlist, style string) {
 	for _, t := range p.Tracks {
 		artists := strings.Join(t.Artists, ", ")
 		line := strings.NewReplacer(
@@ -59,9 +77,8 @@ func FormatPlaylistCustom(p Playlist, style string) string {
 			"{title}", t.Name,
 			"{album}", t.Album,
 		).Replace(style)
-		fmt.Fprintln(&b, line)
+		fmt.Fprintln(b, line)
 	}
-	return b.String()
 }
 
 func FormatPlaylistRaw(p Playlist) string {

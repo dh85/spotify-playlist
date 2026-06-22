@@ -28,6 +28,11 @@ var (
 	version         = "dev"
 )
 
+const (
+	colorCyan  = "\033[36m"
+	colorReset = "\033[0m"
+)
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -141,6 +146,9 @@ func run() error {
 		return saveAndOpen(playlist, cfg)
 	}
 
+	if cfg.StreamURL != "" {
+		fmt.Printf("%s%s%s\n", colorCyan, cfg.StreamURL, colorReset)
+	}
 	if cfg.FormatStyle != "" {
 		fmt.Print(spotify.FormatPlaylistCustom(playlist, cfg.FormatStyle))
 	} else {
@@ -193,13 +201,17 @@ func saveAndOpen(p spotify.Playlist, cfg config.Config) error {
 	name := sanitizeRe.ReplaceAllString(p.Name, "")
 	filename := filepath.Join(cfg.OutputDir, name+".txt")
 
-	var content string
-	if cfg.FormatStyle != "" {
-		content = spotify.FormatPlaylistCustom(p, cfg.FormatStyle)
-	} else {
-		content = spotify.FormatPlaylistRaw(p)
+	var b strings.Builder
+	if cfg.StreamURL != "" {
+		fmt.Fprintf(&b, "%s\n\n", cfg.StreamURL)
 	}
-	if err := os.WriteFile(filename, []byte(content), 0o644); err != nil {
+	if cfg.FormatStyle != "" {
+		b.WriteString(spotify.FormatPlaylistTracksOnly(p, cfg.FormatStyle))
+	} else {
+		b.WriteString(spotify.FormatPlaylistRaw(p))
+	}
+
+	if err := os.WriteFile(filename, []byte(b.String()), 0o644); err != nil {
 		return err
 	}
 

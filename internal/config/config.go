@@ -17,6 +17,7 @@ type Config struct {
 	OutputDir   string
 	SaveToFile  bool
 	FormatStyle string
+	StreamURL   string
 }
 
 func Path() (string, error) {
@@ -64,6 +65,8 @@ func LoadFrom(path string) (Config, error) {
 			cfg.SaveToFile = strings.TrimSpace(value) == "true"
 		case "format_style":
 			cfg.FormatStyle = strings.TrimSpace(value)
+		case "stream_url":
+			cfg.StreamURL = strings.TrimSpace(value)
 		}
 	}
 	return cfg, scanner.Err()
@@ -89,6 +92,8 @@ save_to_file=true
 output_dir=.
 # Custom track format (available: {artist}, {title}, {album})
 format_style=%s
+# Stream URL to display at the top of output
+# stream_url=
 `, defaultFormatStyle)
 	fmt.Printf("Created config: %s\n", path)
 	return os.WriteFile(path, []byte(content), 0o644)
