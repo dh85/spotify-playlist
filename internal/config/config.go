@@ -8,7 +8,10 @@ import (
 	"strings"
 )
 
-const configFile = ".spotify-playlist"
+const (
+	configFile         = ".spotify-playlist"
+	defaultFormatStyle = `<color=#FACC15><sprite name="musical-notes_1F3B6"> now playing... {artist} - {title} <sprite name="musical-notes_1F3B6">`
+)
 
 type Config struct {
 	OutputDir   string
@@ -33,7 +36,7 @@ func Load() (Config, error) {
 }
 
 func LoadFrom(path string) (Config, error) {
-	cfg := Config{OutputDir: ".", SaveToFile: true}
+	cfg := Config{OutputDir: ".", SaveToFile: true, FormatStyle: defaultFormatStyle}
 
 	f, err := os.Open(path)
 	if os.IsNotExist(err) {
@@ -79,14 +82,14 @@ func InitAt(path string) error {
 		return nil
 	}
 
-	content := `# spotify-playlist config
+	content := fmt.Sprintf(`# spotify-playlist config
 # Save playlist to a .txt file and open it (true/false)
 save_to_file=true
 # Directory where playlist .txt files are saved
 output_dir=.
 # Custom track format (available: {artist}, {title}, {album})
-# format_style={artist} - {title}
-`
+format_style=%s
+`, defaultFormatStyle)
 	fmt.Printf("Created config: %s\n", path)
 	return os.WriteFile(path, []byte(content), 0o644)
 }
